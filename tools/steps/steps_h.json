@@ -1,0 +1,6 @@
+[{"wait":6000},{"eval":"MAGELLAN.G.startMission(); MAGELLAN.CS.skip(); 'started'"},{"wait":1500},
+ {"eval":"const M=MAGELLAN; M.G.lightningT=999; M.NPCs.list.forEach(n=>n.combat=false); window.__z=M.Zombies.spawn([M.P.pos[0]+0.6, 0, M.P.pos[2]-4.5], 1); window.__z.awareness=1; M.Zombies.spawn([M.P.pos[0]-3, 0, M.P.pos[2]-9], 0).awareness=1; M.P.yaw=0; M.P.pitch=0; 'spawned'"},
+ {"wait":2500},{"shot":"cal4"},
+ {"eval":"(()=>{const M=MAGELLAN; const z=window.__z; const c=z.jointWorld(M.B ? 2 : 2, false, [0,0,0]); const e=M.P.eyePos; const dx=c[0]-e[0],dy=c[1]-e[1],dz=c[2]-e[2]; M.P.yaw=Math.atan2(-dx,-dz); M.P.pitch=Math.atan2(dy,Math.hypot(dx,dz)); M.P.prevYaw=M.P.yaw; M.P.prevPitch=M.P.pitch; return {chest:c.map(v=>+v.toFixed(2)), dist:Math.hypot(dx,dy,dz).toFixed(2), zstate:z.state}})()"},
+ {"wait":600},{"eval":"MAGELLAN.G.mouseFire=true; 'fire'"},{"wait":700},{"eval":"MAGELLAN.G.mouseFire=false; 'stop'"},{"wait":1200},{"shot":"cal5"},
+ {"eval":"(()=>{const M=MAGELLAN;return {shots:M.P.stats.shots,hits:M.P.stats.hits,kills:M.P.stats.kills,zhp:window.__z.hp,zstate:window.__z.state,rag:!!window.__z.rag,decals:M.FX.decals.length,f:window.__frame}})()"}]

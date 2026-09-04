@@ -1,0 +1,10 @@
+[{"wait":6000},{"eval":"MAGELLAN.G.startMission(); MAGELLAN.CS.skip(); 'started'"},{"wait":2000},
+ {"eval":"const M=MAGELLAN; M.G.lightningT=999; M.NPCs.list.forEach(n=>n.combat=false); M.Zombies.list.length=0; M.G.spawnT=999; M.G.setObjective(1); M.P.pos[0]=9.5; M.P.pos[2]=-40; M.P.yaw=Math.PI/2; M.P.pitch=0; 'pharmacy trigger'"},{"wait":4500},{"shot":"varga1"},
+ {"eval":"(()=>{const M=MAGELLAN;return {cs:M.CS.active&&M.CS.active.name, subs:document.getElementById('subs').textContent.slice(0,40), yaw:M.P.yaw.toFixed(2), varga:M.NPCs.list.find(n=>n.name==='VARGA').pos.map(v=>+v.toFixed(1))}})()"},
+ {"eval":"const M=MAGELLAN; M.CS.skip(); M.G.spawnT=999; M.Zombies.list.length=0; M.P.control=true; M.P.pos[0]=0; M.P.pos[2]=-60; M.P.yaw=0; M.P.pitch=0; const z=M.Zombies.spawn([0.3,0,-67],1); z.awareness=1; z.speed=0.06; z.cool=999; M.G.mouseAim=true; 'ads'"},{"wait":3000},{"shot":"ads1"},
+ {"eval":"const M=MAGELLAN; M.G.mouseAim=false; M.P.give('shotgun',24); 'shotgun'"},{"wait":3500},{"shot":"shotgun1"},
+ {"eval":"const M=MAGELLAN; M.G.mouseFire=true; 'fire shotgun'"},{"wait":600},{"eval":"MAGELLAN.G.mouseFire=false; 'stop'"},{"wait":900},{"shot":"shotgun2"},
+ {"eval":"(()=>{const M=MAGELLAN;return {cur:M.P.cur, ammo:M.P.weapons.shotgun, shots:M.P.stats.shots, hits:M.P.stats.hits, pump:M.P.pumpT.toFixed(2)}})()"},
+ {"eval":"const M=MAGELLAN; M.G.setObjective(4); M.P.pos[0]=0; M.P.pos[2]=-82; M.P.yaw=0; M.P.pitch=0.1; M.W.props.power=true; M.G.objT=200; 'extraction'"},{"wait":2000},
+ {"eval":"const M=MAGELLAN; for(let i=0;i<2;i++){M.CS.wait=0; M.CS.step(3);} 'advance'"},{"wait":3500},{"shot":"extract2"},
+ {"eval":"(()=>{const M=MAGELLAN;return {cs:M.CS.active&&M.CS.active.name, sl:!!M.G.searchlight, subs:document.getElementById('subs').textContent.slice(0,40), pitch:M.P.pitch.toFixed(2)}})()"}]

@@ -1,0 +1,2 @@
+[{"wait":6000},{"eval":"window.__frame"},{"wait":3000},{"eval":"window.__frame"},{"shot":"menu_low"},
+ {"eval":"MAGELLAN.G.startMission(); 'started'"},{"wait":3000},{"eval":"window.__frame"},{"wait":3000},{"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,t:M.G.time.toFixed(1),state:M.G.state}})()"}]

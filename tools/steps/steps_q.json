@@ -1,0 +1,5 @@
+[{"wait":6000},{"eval":"MAGELLAN.G.startMission(); MAGELLAN.CS.skip(); 'started'"},{"wait":2000},
+ {"eval":"const M=MAGELLAN; M.G.lightningT=999; M.NPCs.list.forEach(n=>n.combat=false); M.Zombies.list.length=0; M.G.spawnT=999; M.G.setObjective(1); M.P.pos[0]=9.0; M.P.pos[2]=-39; M.P.yaw=Math.PI/2; M.P.pitch=0; 'pharmacy trigger'"},{"wait":5000},{"shot":"varga2"},
+ {"eval":"(()=>{const M=MAGELLAN;return {cs:M.CS.active&&M.CS.active.name, subs:document.getElementById('subs').textContent.slice(0,40), yaw:M.P.yaw.toFixed(2)}})()"},
+ {"eval":"const M=MAGELLAN; M.CS.skip(); M.G.spawnT=999; M.Zombies.list.length=0; M.P.control=true; M.P.pos[0]=0; M.P.pos[2]=-60; M.P.yaw=0; M.P.pitch=0; M.P.give('shotgun',24); 'shotgun'"},{"wait":3500},{"shot":"shotgun3"},
+ {"eval":"MAGELLAN.P.switchTo('pistol'); 'pistol'"},{"wait":3500},{"shot":"pistol1"}]

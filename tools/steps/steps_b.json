@@ -1,0 +1,8 @@
+[{"wait":9000},{"eval":"MAGELLAN.G.startMission(); MAGELLAN.CS.skip(); 'started'"},{"wait":4000},
+ {"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,upd:M.G.perf.update.toFixed(0),ren:M.G.perf.render.toFixed(0),draws:M.R.drawCalls}})()"},
+ {"eval":"Object.assign(MAGELLAN.S,{vol:0}); 'vol off'"},{"wait":4000},
+ {"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,upd:M.G.perf.update.toFixed(0),ren:M.G.perf.render.toFixed(0)}})()"},
+ {"eval":"MAGELLAN.P.flashlight=false; 'flash off'"},{"wait":4000},
+ {"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,upd:M.G.perf.update.toFixed(0),ren:M.G.perf.render.toFixed(0)}})()"},
+ {"eval":"Object.assign(MAGELLAN.S,{shadows:0}); MAGELLAN.R.applySettings(); 'shadows off'"},{"wait":4000},
+ {"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,upd:M.G.perf.update.toFixed(0),ren:M.G.perf.render.toFixed(0)}})()"}]

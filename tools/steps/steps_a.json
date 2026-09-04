@@ -1,0 +1,9 @@
+[{"wait":9000},{"eval":"MAGELLAN.G.startMission(); 'started'"},{"wait":3000},
+ {"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,state:M.G.state,cs:M.CS.active&&M.CS.active.name,t:M.G.time.toFixed(1)}})()"},
+ {"eval":"MAGELLAN.CS.skip(); 'skipped'"},
+ {"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,state:M.G.state,obj:M.G.obj&&M.G.obj.id,z:M.Zombies.list.length}})()"},
+ {"wait":1000},
+ {"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,state:M.G.state,t:M.G.time.toFixed(1),fps:M.G.fps.toFixed(1),draws:M.R.drawCalls}})()"},
+ {"wait":1000},
+ {"eval":"(()=>{const M=MAGELLAN;return {f:window.__frame,t:M.G.time.toFixed(1),fps:M.G.fps.toFixed(1)}})()"},
+ {"shot":"play1"}]

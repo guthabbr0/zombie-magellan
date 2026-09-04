@@ -1,0 +1,2 @@
+[{"wait":6000},{"eval":"document.getElementById('btnSettings').click(); 'settings'"},{"wait":1200},{"shot":"m_settings"},
+ {"eval":"document.querySelector('.tabs button[data-tab=ctl]').click(); 'ctl tab'"},{"wait":600},{"shot":"m_settings2"}]

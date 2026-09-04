@@ -1,0 +1,13 @@
+[{"wait":6000},{"eval":"MAGELLAN.G.startMission(); 'started'"},
+ {"wait":16000},{"eval":"(()=>{const M=MAGELLAN;return {t:M.G.time.toFixed(1),subs:document.getElementById('subs').textContent.slice(0,60)}})()"},{"shot":"intro1"},
+ {"eval":"MAGELLAN.CS.wait=0; MAGELLAN.G.time+=8; for(let i=0;i<3;i++)MAGELLAN.CS.step(3); 'advance'"},{"wait":2500},{"shot":"intro2"},
+ {"eval":"(()=>{const M=MAGELLAN;return {t:M.G.time.toFixed(1),subs:document.getElementById('subs').textContent.slice(0,80),z:M.Zombies.list.length,npc:M.NPCs.list.map(n=>n.name+'/'+n.anim+(n.dead?'/dead':''))}})()"},
+ {"eval":"MAGELLAN.CS.skip(); 'skipped'"},{"wait":2000},{"shot":"play1"},
+ {"eval":"(()=>{const M=MAGELLAN;return {state:M.G.state,obj:M.G.obj&&M.G.obj.id,z:M.Zombies.list.length,alive:M.Zombies.alive(),weapons:Object.keys(M.P.weapons).filter(k=>M.P.weapons[k]),cur:M.P.cur,pos:M.P.pos.map(v=>+v.toFixed(2)),draws:M.R.drawCalls,npc:M.NPCs.list.map(n=>n.name+'/'+n.anim+(n.dead?'/dead':''))}})()"},
+ {"eval":"const M=MAGELLAN; M.Zombies.spawn([M.P.pos[0]+0.5, 0, M.P.pos[2]-6], 1).awareness=1; M.Zombies.spawn([M.P.pos[0]-2, 0, M.P.pos[2]-9], 0).awareness=1; M.P.yaw=0; M.P.pitch=0; 'spawned close'"},
+ {"wait":2500},{"shot":"play2"},
+ {"eval":"MAGELLAN.G.mouseFire=true; 'fire'"},{"wait":2500},{"eval":"MAGELLAN.G.mouseFire=false; 'stop'"},{"shot":"play3"},
+ {"eval":"(()=>{const M=MAGELLAN;return {shots:M.P.stats.shots,hits:M.P.stats.hits,kills:M.P.stats.kills,ammo:M.P.weapons[M.P.cur],parts:[M.FX.alpha.count,M.FX.add.count],decals:M.FX.decals.length,hp:M.P.hp,zstates:M.Zombies.list.map(z=>z.state+(z.rag?'/rag':''))}})()"},
+ {"eval":"MAGELLAN.P.switchTo('rifle'); MAGELLAN.G.keys.KeyW=true; 'rifle+walk'"},{"wait":3000},{"eval":"MAGELLAN.G.mouseAim=true; MAGELLAN.G.mouseFire=true; 'ads fire'"},{"wait":2500},{"shot":"play4"},
+ {"eval":"(()=>{const M=MAGELLAN;return {cur:M.P.cur,shots:M.P.stats.shots,kills:M.P.stats.kills,ammo:M.P.weapons.rifle,pos:M.P.pos.map(v=>+v.toFixed(2)),hp:M.P.hp,dead:M.Zombies.list.filter(z=>z.dead).length,alive:M.Zombies.alive(),f:window.__frame}})()"},
+ {"eval":"MAGELLAN.G.mouseFire=false; MAGELLAN.G.mouseAim=false; MAGELLAN.G.keys.KeyW=false; MAGELLAN.G.input.reload=true; 'reload'"},{"wait":1500},{"shot":"play5"}]

@@ -1,0 +1,5 @@
+[{"wait":6000},{"eval":"({touch:document.body.classList.contains('touch'), mobile:MAGELLAN.S.preset, status:document.getElementById('status').textContent})"},{"shot":"m_menu"},
+ {"tap":[170,290]},{"wait":1500},{"shot":"m_settings"},{"eval":"document.getElementById('btnCloseSettings').click(); 'closed'"},
+ {"eval":"MAGELLAN.G.startMission(); MAGELLAN.CS.skip(); 'started'"},{"wait":2500},{"shot":"m_play"},
+ {"eval":"(()=>{const M=MAGELLAN;return {state:M.G.state,touchVisible:!document.getElementById('touch').classList.contains('hidden'),fs:!!document.fullscreenElement}})()"},
+ {"tap":[100,300]},{"wait":800},{"tap":[780,300]},{"wait":800},{"shot":"m_play2"}]
