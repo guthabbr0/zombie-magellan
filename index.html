@@ -142,6 +142,8 @@ body:not(.touch) #orient{display:none;}
 #bPause{right:2.4vmin;top:9vmin;width:9vmin;height:9vmin;}
 body:not(.touch) #touch{display:none;}
 body.touch #dot{width:6px;height:6px;margin:-3px 0 0 -3px;}
+body.touch #hud .br{right:auto;left:50%;transform:translateX(-50%);bottom:2vmin;text-align:center;}
+body.touch #hud .bl{max-width:34vw;bottom:auto;top:30vmin;}
 
 /* ---------- cutscene ---------- */
 #cine{position:absolute;inset:0;}
@@ -576,7 +578,7 @@ vec3 shade(vec3 N, vec3 V, vec3 L, vec3 albedo, float rough, float metal, vec3 l
   return (diff + spec)*lc; }
 float spotAtt(float d, float range, float cosA, float cosOuter, float cosInner){
   float x = clamp(1.0 - pow(d/range, 4.0), 0.0, 1.0); float cone = smoothstep(cosOuter, cosInner, cosA);
-  return x*x/(d*d + 3.0)*cone; }
+  return x*x/(d*d + 4.0)*cone; }
 float pointAtt(float d, float range){ float x = clamp(1.0 - pow(d/range, 4.0), 0.0, 1.0); return x*x/(d*d + 0.25); }
 `;
 
@@ -965,7 +967,7 @@ void main(){
   // lens dirt & blood on lens
   vec3 dirt = texture(uDirt, vUV).rgb; float bright = dot(col, vec3(0.333));
   col += dirt.r*bright*bright*0.9*uDirtAmt;
-  float blood = dirt.g*uFx2.w; col = mix(col, vec3(0.32, 0.01, 0.0)*(0.4 + col.r*0.8), clamp(blood*1.6, 0.0, 1.0));
+  float blood = clamp(dirt.g*uFx2.w*1.3, 0.0, 1.0); col = mix(col, vec3(0.42, 0.02, 0.01)*(0.35 + col*1.2), blood*0.85);
   // sensor noise: luminance grain + chroma noise, more with gain
   float lum = dot(col, vec3(0.3, 0.59, 0.11));
   vec2 gc = vUV*uRes; float tt = fract(uTime)*97.0;
@@ -1195,8 +1197,8 @@ vec3 mLensDirt(vec2 uv){
   float smudge = smoothstep(0.55, 0.85, fbm(uv*3.0 + 1.0, 4))*0.6 + smoothstep(0.7, 0.9, fbm(uv*9.0 + 4.0, 3))*0.4;
   float specks = 0.0; for(int i=0;i<40;i++){ vec2 sp = hash22(vec2(float(i), 11.0)); float sr = 0.002 + 0.006*hash12(vec2(float(i), 5.0)); specks = max(specks, smoothstep(sr, sr*0.4, length(uv - sp))*0.8); }
   float arc = smoothstep(0.02, 0.0, abs(length(p - vec2(0.4, -0.2)) - 0.35))*smoothstep(0.5, 0.9, fbm(uv*20.0, 2))*0.5;
-  float blood = 0.0; for(int i=0;i<14;i++){ vec2 bp = hash22(vec2(float(i), 23.0)); vec2 d = uv - bp; d.y *= 0.6; float br = 0.02 + 0.07*hash12(vec2(float(i), 9.0)); float n = fbm(uv*30.0 + float(i), 3); blood = max(blood, smoothstep(br, br*0.5, length(d) + (n - 0.5)*br)); }
-  float drips = 0.0; for(int i=0;i<6;i++){ float x = hash12(vec2(float(i), 31.0)); float y0 = hash12(vec2(float(i), 32.0)); float len = 0.1 + 0.3*hash12(vec2(float(i), 33.0)); drips = max(drips, smoothstep(0.006, 0.002, abs(uv.x - x) - 0.002*fbm(uv*50.0, 2))*step(y0 - len, uv.y)*step(uv.y, y0)); }
+  float blood = 0.0; for(int i=0;i<18;i++){ vec2 bp = hash22(vec2(float(i), 23.0)); vec2 d = uv - bp; d.y *= 0.7; float br = 0.008 + 0.03*hash12(vec2(float(i), 9.0)); float n = fbm(uv*40.0 + float(i), 3); blood = max(blood, smoothstep(br, br*0.45, length(d) + (n - 0.5)*br*1.2)*(0.5 + 0.5*hash12(vec2(float(i), 4.0)))); }
+  float drips = 0.0; for(int i=0;i<5;i++){ float x = hash12(vec2(float(i), 31.0)); float y0 = hash12(vec2(float(i), 32.0)); float len = 0.06 + 0.2*hash12(vec2(float(i), 33.0)); drips = max(drips, smoothstep(0.004, 0.0012, abs(uv.x - x) - 0.0015*fbm(uv*50.0, 2))*step(y0 - len, uv.y)*step(uv.y, y0)*0.7); }
   return vec3(sat(smudge*0.5 + specks + arc), sat(blood + drips*0.8), 0.0);
 }
 float mChain(vec2 uv){
@@ -1462,9 +1464,9 @@ const BONE_OFF = BONES.map((b, i) => b[1] < 0 ? b[2].slice() : V3.sub([], b[2], 
    Weapons (viewmodel geometry). Bones: 0 body, 1 magazine, 2 left hand, 3 right hand, 4 slide/pump/charging handle
    ============================================================ */
 const WEAPONS = {
-  pistol: { name: 'P9 SIDEARM', mag: 15, reserve: 90, maxReserve: 150, dmg: 34, rpm: 380, auto: false, pellets: 1, spread: 0.012, adsSpread: 0.004, recoil: [0.035, 2.2, 0.6], reload: 1.7, ads: [0, -0.052, -0.30], hip: [0.13, -0.16, -0.36], muzzle: [0, 0.02, -0.17], light: [0, -0.02, -0.11], sound: 'pistol', kick: 0.6, range: 90, adsFov: 0.8, swayScale: 1.0 },
-  rifle: { name: 'M4A1 CARBINE', mag: 30, reserve: 120, maxReserve: 240, dmg: 30, rpm: 720, auto: true, pellets: 1, spread: 0.02, adsSpread: 0.005, recoil: [0.03, 1.4, 0.5], reload: 2.4, ads: [0, -0.087, -0.34], hip: [0.15, -0.19, -0.40], muzzle: [0, 0.012, -0.66], light: [0, -0.037, -0.40], sound: 'rifle', kick: 0.8, range: 140, adsFov: 0.72, swayScale: 1.2 },
-  shotgun: { name: 'S12 PUMP', mag: 8, reserve: 24, maxReverse: 48, maxReserve: 48, dmg: 16, rpm: 70, auto: false, pellets: 9, spread: 0.055, adsSpread: 0.045, recoil: [0.09, 5.0, 1.5], reload: 0.75, shellByShell: true, ads: [0, -0.070, -0.36], hip: [0.14, -0.19, -0.42], muzzle: [0, 0.02, -0.73], light: [0, -0.042, -0.50], sound: 'shotgun', kick: 1.6, range: 45, adsFov: 0.8, swayScale: 1.4, pump: true },
+  pistol: { name: 'P9 SIDEARM', mag: 15, reserve: 90, maxReserve: 150, dmg: 34, rpm: 380, auto: false, pellets: 1, spread: 0.012, adsSpread: 0.004, recoil: [0.035, 2.2, 0.6], reload: 1.7, ads: [0, -0.052, -0.30], hip: [0.10, -0.085, -0.33], muzzle: [0, 0.02, -0.17], light: [0, -0.02, -0.11], sound: 'pistol', kick: 0.6, range: 90, adsFov: 0.8, swayScale: 1.0 },
+  rifle: { name: 'M4A1 CARBINE', mag: 30, reserve: 120, maxReserve: 240, dmg: 30, rpm: 720, auto: true, pellets: 1, spread: 0.02, adsSpread: 0.005, recoil: [0.03, 1.4, 0.5], reload: 2.4, ads: [0, -0.087, -0.34], hip: [0.13, -0.13, -0.40], muzzle: [0, 0.012, -0.66], light: [0, -0.037, -0.40], sound: 'rifle', kick: 0.8, range: 140, adsFov: 0.72, swayScale: 1.2 },
+  shotgun: { name: 'S12 PUMP', mag: 8, reserve: 24, maxReverse: 48, maxReserve: 48, dmg: 16, rpm: 70, auto: false, pellets: 9, spread: 0.055, adsSpread: 0.045, recoil: [0.09, 5.0, 1.5], reload: 0.75, shellByShell: true, ads: [0, -0.070, -0.36], hip: [0.12, -0.105, -0.40], muzzle: [0, 0.02, -0.73], light: [0, -0.042, -0.50], sound: 'shotgun', kick: 1.6, range: 45, adsFov: 0.8, swayScale: 1.4, pump: true },
 };
 function buildWeaponMesh(type) {
   const metal = new MB(), arms = new MB(), wood = new MB(), dot = new MB(), lens = new MB();
@@ -1519,7 +1521,7 @@ const R = {
   camPos: [0, 1.6, 0], camFwd: [0, 0, -1], fov: 96, near: 0.05, far: 600, aspect: 1.77,
   moonVP: M4.create(), flashVP: M4.create(), moonDir: [0.35, 0.55, -0.45], moonColor: [0.22, 0.27, 0.36], skyColor: [0.055, 0.07, 0.10], groundColor: [0.02, 0.019, 0.017],
   fog: [0.022, 0.026, 0.034, 0.02], wet: 1.0, lightning: 0, time: 0,
-  flash: { on: 0, pos: [0, 0, 0], dir: [0, 0, -1], cosOuter: Math.cos(deg(24)), cosInner: Math.cos(deg(9)), intensity: 48, range: 40, color: [1.0, 0.95, 0.85], shadow: 1 },
+  flash: { on: 0, pos: [0, 0, 0], dir: [0, 0, -1], cosOuter: Math.cos(deg(24)), cosInner: Math.cos(deg(9)), intensity: 42, range: 40, color: [1.0, 0.95, 0.85], shadow: 1 },
   pointLights: [], spotLights: [], // per-frame lists {pos, radius, color, intensity} / {pos, dir, range, cosOuter, cosInner, color}
   pointArr: new Float32Array(40), pointColArr: new Float32Array(40), spotPosArr: new Float32Array(16), spotDirArr: new Float32Array(16), spotColArr: new Float32Array(16), nPoint: 0, nSpot: 0,
   exposure: 1.0, fx: { damage: 0, glitch: 0, static: 0, fade: 1, droplets: 0, flash: 0, blood: 0 }, flashGlow: 0,
@@ -1618,9 +1620,11 @@ R.setCamera = function (pos, yaw, pitch, roll, fov) {
   const target = V3.add([], pos, fwd);
   const up = [Math.sin(roll) * cy, Math.cos(roll), -Math.sin(roll) * sy];
   M4.lookAt(R.view, pos, target, up);
-  M4.perspective(R.proj, deg(fov), R.aspect, R.near, R.far);
+  // S.fov is the horizontal field of view; convert to vertical for the projection
+  const fovy = 2 * Math.atan(Math.tan(deg(fov) / 2) / Math.max(R.aspect, 1.0));
+  R.fovy = fovy; M4.perspective(R.proj, fovy, R.aspect, R.near, R.far);
   M4.mul(R.vp, R.proj, R.view); M4.invert(R.invVP, R.vp); M4.invert(R.camWorld, R.view);
-  M4.perspective(R.projVM, deg(IS_MOBILE ? 62 : 58), R.aspect, 0.02, 20); M4.mul(R.vpVM, R.projVM, R.view);
+  M4.perspective(R.projVM, 2 * Math.atan(Math.tan(deg(IS_MOBILE ? 80 : 74) / 2) / Math.max(R.aspect, 1.0)), R.aspect, 0.02, 20); M4.mul(R.vpVM, R.projVM, R.view);
 };
 R.setLights = function (points, spots) {
   // choose up to 10 most relevant point lights by intensity/dist^2
@@ -1725,7 +1729,7 @@ R.renderFrame = function (scene, dt) {
   gl.disable(gl.BLEND); gl.depthMask(true); gl.disable(gl.DEPTH_TEST);
   // ---- post ----
   const nd = F.main.colors[1], sceneTex = F.main.colors[0];
-  const tanHalfY = Math.tan(deg(R.fov) / 2), tanHalfX = tanHalfY * R.aspect;
+  const tanHalfY = Math.tan(R.fovy / 2), tanHalfX = tanHalfY * R.aspect;
   if (S.ssao) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, F.ssao.fb); gl.viewport(0, 0, F.ssao.w, F.ssao.h); useProg(P.ssao); bindTex(0, nd);
     gl.uniform2f(P.ssao.u.uTanHalf, tanHalfX, tanHalfY); gl.uniform1f(P.ssao.u.uRadius, 0.6); gl.uniform1f(P.ssao.u.uStrength, 1.1); drawFullscreen();
@@ -1749,7 +1753,7 @@ R.renderFrame = function (scene, dt) {
   }
   // auto exposure
   const li = R.lumIdx, lo = 1 - li; gl.bindFramebuffer(gl.FRAMEBUFFER, R.lum[li].fb); gl.viewport(0, 0, 1, 1); useProg(P.lum); bindTex(0, sceneTex); bindTex(1, R.lum[lo].colors[0]);
-  gl.uniform1f(P.lum.u.uDt, dt); gl.uniform1f(P.lum.u.uKey, 0.06); gl.uniform1f(P.lum.u.uMin, 0.6); gl.uniform1f(P.lum.u.uMax, 2.4); drawFullscreen(); R.lumIdx = lo;
+  gl.uniform1f(P.lum.u.uDt, dt); gl.uniform1f(P.lum.u.uKey, 0.05); gl.uniform1f(P.lum.u.uMin, 0.5); gl.uniform1f(P.lum.u.uMax, 2.0); drawFullscreen(); R.lumIdx = lo;
   // resolve
   gl.bindFramebuffer(gl.FRAMEBUFFER, F.ldr1.fb); gl.viewport(0, 0, R.w, R.h); useProg(P.resolve);
   bindTex(0, sceneTex); bindTex(1, S.bloom ? F.bloomUp[0].colors[0] : R.black); bindTex(2, S.ssao ? F.ssaoBlur.colors[0] : R.white); bindTex(3, (S.vol && R.flash.on && R.shadow.flash) ? F.volBlur.colors[0] : R.black); bindTex(4, nd); bindTex(5, R.lum[li].colors[0]);
@@ -1795,7 +1799,7 @@ const PARTICLE_MAX = 2048;
    World construction (procedural city block)
    Coordinates: X east, Z south (north = -Z), Y up. Metres.
    ============================================================ */
-const W = { opaque: [], colliders: [], points: [], spots: [], dyn: [], spawns: [], zones: [], groups: {}, props: {}, lampHeads: [], windowsLit: [] };
+const W = { opaque: [], transparent: [], colliders: [], points: [], spots: [], dyn: [], spawns: [], zones: [], groups: {}, props: {}, lampHeads: [], windowsLit: [] };
 const wrng = mulberry(1337);
 const wr = (a, b) => a + wrng() * (b - a);
 function grp(key, material) { if (!W.groups[key]) W.groups[key] = { mb: new MB(), mat: material }; return W.groups[key].mb; }
@@ -1814,11 +1818,11 @@ const MATS = {
   rubber: mat({ tex: 'metal', tint: [0.035, 0.035, 0.035, 1], rough: 2.5, metal: 0 }), glass: mat({ tex: 'blank', tint: [0.02, 0.025, 0.03, 1], rough: 0.08, metal: 0.4 }),
   rust: mat({ tex: 'rust' }), wood: mat({ tex: 'wood' }), fabric: mat({ tex: 'fabric' }), chain: mat({ tex: 'chain', cutout: true, alpha: true, twoSided: true }), concreteBarrier: mat({ tex: 'concrete', tint: [0.8, 0.8, 0.78, 1] }),
   winWarm: mat({ tex: 'blank', tint: [1, 0.8, 0.5, 1], emissive: [2.2, 1.5, 0.8], unlit: 1 }), winCool: mat({ tex: 'blank', tint: [0.6, 0.75, 1, 1], emissive: [0.9, 1.3, 2.0], unlit: 1 }),
-  lampGlass: mat({ tex: 'blank', tint: [1, 0.85, 0.6, 1], emissive: [0, 0, 0], unlit: 1 }), pharmacy: mat({ tex: 'blank', tint: [0.2, 1, 0.3, 1], emissive: [0.6, 5.0, 1.0], unlit: 1 }),
+  lampGlass: mat({ tex: 'blank', tint: [1, 0.85, 0.6, 1], emissive: [0, 0, 0], unlit: 1 }), pharmacy: mat({ tex: 'blank', tint: [0.2, 1, 0.3, 1], emissive: [0.3, 2.6, 0.5], unlit: 1 }), storeGlass: mat({ tex: 'blank', tint: [0.55, 0.65, 0.7, 0.28], rough: 0.06, metal: 0.6, alpha: true, twoSided: true }),
   headlight: mat({ tex: 'blank', tint: [1, 1, 0.9, 1], emissive: [12, 11, 9], unlit: 1 }), tailLight: mat({ tex: 'blank', tint: [1, 0.1, 0.05, 1], emissive: [3, 0.2, 0.05], unlit: 1 }),
   redStrobe: mat({ tex: 'blank', tint: [1, 0.2, 0.1, 1], emissive: [0, 0, 0], unlit: 1 }), blueStrobe: mat({ tex: 'blank', tint: [0.2, 0.3, 1, 1], emissive: [0, 0, 0], unlit: 1 }),
   trafficRed: mat({ tex: 'blank', tint: [1, 0.15, 0.05, 1], emissive: [0, 0, 0], unlit: 1 }), genLamp: mat({ tex: 'blank', tint: [1, 0.2, 0.1, 1], emissive: [0, 0, 0], unlit: 1 }),
-  interior: mat({ tex: 'plaster', tint: [0.9, 0.9, 0.85, 1] }), shelves: mat({ tex: 'wood', tint: [0.7, 0.7, 0.7, 1] }), counter: mat({ tex: 'metal', tint: [0.6, 0.6, 0.62, 1] }), ceilLight: mat({ tex: 'blank', tint: [1, 1, 1, 1], emissive: [3, 3, 2.6], unlit: 1 }),
+  interior: mat({ tex: 'plaster', tint: [0.9, 0.9, 0.85, 1] }), shelves: mat({ tex: 'wood', tint: [0.7, 0.7, 0.7, 1] }), counter: mat({ tex: 'metal', tint: [0.6, 0.6, 0.62, 1] }), ceilLight: mat({ tex: 'blank', tint: [1, 1, 1, 1], emissive: [1.6, 1.6, 1.4], unlit: 1 }),
   medkit: mat({ tex: 'metal', tint: [0.85, 0.85, 0.85, 1] }), medCross: mat({ tex: 'blank', tint: [1, 0.1, 0.1, 1], emissive: [1.5, 0.1, 0.1], unlit: 1 }), ammoBox: mat({ tex: 'metal', tint: [0.25, 0.28, 0.18, 1] }), ammoTape: mat({ tex: 'blank', tint: [1, 0.8, 0.3, 1], emissive: [0.9, 0.7, 0.2], unlit: 1 }),
   strobeLZ: mat({ tex: 'blank', tint: [1, 0.2, 0.1, 1], emissive: [0, 0, 0], unlit: 1 }),
 };
@@ -1838,8 +1842,8 @@ function sidewalk(x0, x1, z0, z1) {
 function plaza(x0, x1, z0, z1) { const mb = grp('tiles', MATS.tiles); mb.box([(x0 + x1) / 2, 0.06, (z0 + z1) / 2], [x1 - x0, 0.12, z1 - z0], { worldUV: true, uvScale: [4, 4], skip: [[0, -1, 0]] }); W.zones.push({ x0, x1, z0, z1, y: 0.12 }); }
 function alleyFloor(x0, x1, z0, z1) { const mb = grp('asphalt', MATS.asphalt); mb.box([(x0 + x1) / 2, 0.06, (z0 + z1) / 2], [x1 - x0, 0.12, z1 - z0], { worldUV: true, uvScale: [6, 6], skip: [[0, -1, 0]] }); W.zones.push({ x0, x1, z0, z1, y: 0.12 }); }
 function building(x0, x1, z0, z1, h, type, opts = {}) {
-  const key = type === 'brick' ? 'brickF' : 'plasterF'; const mb = grp(key, MATS[key]);
-  const c = [(x0 + x1) / 2, h / 2, (z0 + z1) / 2], s = [x1 - x0, h, z1 - z0];
+  const key = type === 'brick' ? 'brickF' : 'plasterF'; const mb = grp(key, MATS[key]); const y0 = opts.y0 || 0;
+  const c = [(x0 + x1) / 2, (h + y0) / 2, (z0 + z1) / 2], s = [x1 - x0, h - y0, z1 - z0];
   mb.box(c, s, { worldUV: true, uvScale: [4, 3.6], skip: [[0, 1, 0], [0, -1, 0]] });
   const rb = grp('roof', MATS.roof); rb.box([c[0], h + 0.15, c[2]], [s[0] + 0.3, 0.3, s[2] + 0.3], { worldUV: true, uvScale: [4, 4], skip: [[0, -1, 0]] });
   // roof clutter
@@ -1849,7 +1853,7 @@ function building(x0, x1, z0, z1, h, type, opts = {}) {
   const faces = opts.faces || [];
   for (const f of faces) {
     const floors = Math.floor(h / 3.6); const cols = Math.floor((f === 'w' || f === 'e' ? (z1 - z0) : (x1 - x0)) / 4);
-    for (let fl = 0; fl < floors; fl++) for (let cI = 0; cI < cols; cI++) {
+    for (let fl = Math.round(y0 / 3.6); fl < floors; fl++) for (let cI = 0; cI < cols; cI++) {
       if (wrng() > (opts.litProb || 0.09)) continue;
       const warm = wrng() < 0.65; const wm = grp(warm ? 'winWarm' : 'winCool', warm ? MATS.winWarm : MATS.winCool);
       const y0 = fl * 3.6 + 0.79, y1 = fl * 3.6 + 2.59;
@@ -1945,8 +1949,11 @@ function generator(x, z) {
 }
 function pharmacy(x0, x1, z0, z1, h) {
   // upper floors as a normal building, hollow ground floor with storefront on the west (x0) side
-  building(x0, x1, z0, z1, h, 'plaster', { faces: ['w', 's'], noCollide: true });
+  building(x0, x1, z0, z1, h, 'plaster', { faces: ['w', 's'], noCollide: true, y0: 3.6 });
   addCollider([x0, 3.6, z0], [x1, h, z1], 'building');
+  // ground floor: south, east and north outer walls (plaster), west side is the storefront
+  const ow = grp('plaster', MATS.plaster); ow.box([(x0 + x1) / 2, 1.8, z1 - 0.15], [x1 - x0, 3.6, 0.3], { worldUV: true, uvScale: [3, 3] }); ow.box([(x0 + x1) / 2, 1.8, z0 + 0.15], [x1 - x0, 3.6, 0.3], { worldUV: true, uvScale: [3, 3] }); ow.box([x1 - 0.15, 1.8, (z0 + z1) / 2], [0.3, 3.6, z1 - z0], { worldUV: true, uvScale: [3, 3] });
+  addCollider([x0 + 6, 0, z0], [x1, 3.6, z1], 'building');
   // ground-floor walls
   const wm = grp('plaster', MATS.plaster); const t = 0.3;
   // west wall segments (storefront gap between z=-44 and z=-36, door at z -34..-32)
@@ -1960,16 +1967,16 @@ function pharmacy(x0, x1, z0, z1, h) {
   const sh = grp('shelves', MATS.shelves); for (let i = 0; i < 4; i++) sh.box([x0 + 5.6, 0.12 + 0.5 + i * 0.6, (z0 + z1) / 2], [0.5, 0.05, z1 - z0 - 2], { uvScale: [1, 1] });
   const ct = grp('counter', MATS.counter); ct.box([x0 + 3.2, 0.12 + 0.5, z0 + 10], [3.5, 1.0, 0.8], { uvScale: [1, 1] });
   const cl = grp('ceilLight', MATS.ceilLight); cl.box([x0 + 3, 3.42, z0 + 10], [1.2, 0.05, 0.3]);
-  W.points.push({ pos: [x0 + 3, 3.2, z0 + 10], radius: 14, color: [1, 0.95, 0.85], intensity: 0, fn: t => (Math.sin(t * 27) * Math.sin(t * 5.3) > -0.7 ? 5 : 1.5) });
+  W.points.push({ pos: [x0 + 3, 3.2, z0 + 10], radius: 12, color: [1, 0.95, 0.85], intensity: 0, fn: t => (Math.sin(t * 27) * Math.sin(t * 5.3) > -0.7 ? 2.5 : 0.8) });
   // storefront glass + frame + boards
-  const gm = grp('glass', MATS.glass); gm.plane([x0 + 0.05, 0.12, z0 + 14], [x0 + 0.05, 0.12, z0 + 6], [x0 + 0.05, 3.5, z0 + 6], [x0 + 0.05, 3.5, z0 + 14], { uvScale: [1, 1] });
+  const gm = new MB(); gm.plane([x0 + 0.05, 0.12, z0 + 14], [x0 + 0.05, 0.12, z0 + 6], [x0 + 0.05, 3.5, z0 + 6], [x0 + 0.05, 3.5, z0 + 14], { uvScale: [1, 1] }); W.transparent.push({ mesh: gm.build(), mat: MATS.storeGlass, model: M4.create(), twoSided: true });
   addCollider([x0 - 0.05, 0, z0 + 6], [x0 + 0.15, 3.6, z0 + 14], 'glass');
   const fr = grp('metalDark', MATS.metalDark); fr.box([x0 + 0.1, 1.8, z0 + 10], [0.08, 0.08, 8.1]); fr.box([x0 + 0.1, 3.55, z0 + 10], [0.12, 0.12, 8.2]); fr.box([x0 + 0.1, 0.16, z0 + 10], [0.12, 0.1, 8.2]);
   const wd = grp('wood', MATS.wood); wd.box([x0 + 0.06, 1.0, z1 - 3], [0.08, 0.25, 2.0], { rz: 0.15, uvScale: [1, 1] }); wd.box([x0 + 0.06, 2.0, z1 - 3], [0.08, 0.25, 2.0], { rz: -0.1, uvScale: [1, 1] });
   const dk = grp('metalDark', MATS.metalDark); dk.box([x0 + 0.02, 1.2, z1 - 3], [0.04, 2.3, 1.8]); addCollider([x0 - 0.05, 0, z1 - 4], [x0 + t, 3.6, z1 - 2], 'door');
   // sign: green cross above the storefront
   const sg = grp('pharmacy', MATS.pharmacy); sg.box([x0 - 0.15, 4.4, z0 + 10], [0.12, 0.35, 1.4]); sg.box([x0 - 0.15, 4.4, z0 + 10], [0.12, 1.4, 0.35]);
-  W.points.push({ pos: [x0 - 0.8, 4.4, z0 + 10], radius: 14, color: [0.3, 1, 0.4], intensity: 0, fn: t => (Math.sin(t * 19) + Math.sin(t * 3.7) > -1.2 ? 6 : 0.5) });
+  W.points.push({ pos: [x0 - 0.8, 4.4, z0 + 10], radius: 12, color: [0.3, 1, 0.4], intensity: 0, fn: t => (Math.sin(t * 19) + Math.sin(t * 3.7) > -1.2 ? 2.5 : 0.3) });
   W.props.pharmacyDoor = [x0 - 1.5, 0, z1 - 3]; W.props.pharmacyWindow = [x0 - 1.5, 0, z0 + 10]; W.props.survivor = [x0 + 3.2, 0.12, z0 + 8.6];
 }
 function medkit(x, z) { const mb = new MB(); const y = groundY(x, z); mb.box([x, y + 0.12, z], [0.4, 0.24, 0.3], { uvScale: [0.5, 0.5] }); const d = { mesh: mb.build(), mat: MATS.medkit, model: M4.create(), kind: 'med', pos: [x, y, z] }; const cm = new MB(); cm.box([x, y + 0.245, z], [0.18, 0.01, 0.06]); cm.box([x, y + 0.245, z], [0.06, 0.01, 0.18]); d.extra = { mesh: cm.build(), mat: MATS.medCross, model: M4.create() }; return d; }
@@ -2058,11 +2065,11 @@ function buildWorld() {
   for (const p of [[-30, 0.12, -100], [30, 0.12, -100], [0, 0.12, -102], [-32, 0.12, -76], [32, 0.12, -76]]) W.spawns.push({ pos: p, tag: 'plaza' });
   // LZ floodlights (powered later) on the plaza
   W.props.lz = [0, 0.12, -86]; W.props.lzLights = [];
-  for (const [x, z] of [[-10, -78], [10, -78], [-10, -94], [10, -94]]) { const l = { pos: [x, 3.2, z], radius: 24, color: [1, 0.95, 0.85], intensity: 0, fn: t => W.props.power ? 10 : 0 }; W.points.push(l); const mb = grp('metalDark', MATS.metalDark); mb.tube([x, 0.12, z], [x, 3.2, z], [0.05, 0.05], [0.04, 0.04], { segs: 6, rings: 2 }); mb.box([x, 3.3, z], [0.5, 0.35, 0.3]);
+  for (const [x, z] of [[-10, -78], [10, -78], [-10, -94], [10, -94]]) { const l = { pos: [x, 3.2, z], radius: 22, color: [1, 0.95, 0.85], intensity: 0, fn: t => W.props.power ? 5 : 0 }; W.points.push(l); const mb = grp('metalDark', MATS.metalDark); mb.tube([x, 0.12, z], [x, 3.2, z], [0.05, 0.05], [0.04, 0.04], { segs: 6, rings: 2 }); mb.box([x, 3.3, z], [0.5, 0.35, 0.3]);
     const d = { mesh: null, mat: Object.assign({}, MATS.headlight), model: M4.create(), emissiveFn: t => W.props.power ? [8, 7.5, 6.5] : [0, 0, 0] }; const lm = new MB(); lm.box([x, 3.1, z], [0.45, 0.02, 0.25]); d.mesh = lm.build(); W.dyn.push(d); }
   // strobe at LZ (activated when arriving)
   const sd = { mesh: null, mat: Object.assign({}, MATS.strobeLZ), model: M4.create(), emissiveFn: t => W.props.strobe ? ((t * 2) % 1 < 0.1 ? [12, 1.5, 0.5] : [0.2, 0.02, 0]) : [0, 0, 0] }; const sm = new MB(); sm.box([0, 0.2, -86], [0.14, 0.16, 0.14]); sd.mesh = sm.build(); W.dyn.push(sd);
-  W.points.push({ pos: [0, 0.5, -86], radius: 20, color: [1, 0.15, 0.05], intensity: 0, fn: t => W.props.strobe ? ((t * 2) % 1 < 0.1 ? 16 : 0) : 0 });
+  W.points.push({ pos: [0, 0.5, -86], radius: 18, color: [1, 0.15, 0.05], intensity: 0, fn: t => W.props.strobe ? ((t * 2) % 1 < 0.1 ? 9 : 0) : 0 });
   // burning car light + police
   W.points.push({ pos: [7, 1.4, -34], radius: 16, color: [1, 0.45, 0.12], intensity: 0, fn: t => 7 + 3 * Math.sin(t * 23.1) * Math.sin(t * 7.3) + 2 * Math.sin(t * 51) });
   // checkpoint lantern light on the crates
@@ -2275,7 +2282,7 @@ P.canAct = () => P.alive && P.control && !P.next;
 P.startReload = function () { const w = P.weapon(), st = P.weapons[P.cur]; if (P.reload || st.ammo >= w.mag || st.reserve <= 0 || !P.canAct()) return; P.reload = { t: 0, dur: w.reload, step: 0 }; if (!w.shellByShell) A.reloadSound(0, P.cur); };
 P.ammoPickup = function () { let any = false; for (const k of P.order) { const st = P.weapons[k]; if (!st) continue; const w = WEAPONS[k]; if (st.reserve < w.maxReserve) { st.reserve = Math.min(w.maxReserve, st.reserve + Math.round(w.mag * 1.5)); any = true; } } return any; };
 P.takeDamage = function (amount, from) {
-  if (!P.alive || G.godmode) return; P.hp -= amount; P.lastDamageT = G.time; P.damageFx = 1; P.bloodLens = Math.min(1, P.bloodLens + 0.35); P.cam.shake = Math.min(1, P.cam.shake + 0.6); P.glitch = 0.8;
+  if (!P.alive || G.godmode) return; P.hp -= amount; P.lastDamageT = G.time; P.damageFx = 1; P.bloodLens = Math.min(1, P.bloodLens + 0.28); P.cam.shake = Math.min(1, P.cam.shake + 0.6); P.glitch = 0.8;
   P.cam.kickP += rand(-0.06, 0.06); P.cam.kickY += rand(-0.08, 0.08); P.cam.dipVel -= 0.4; A.playerHurt(); P.stats.damage += amount;
   if (P.hp <= 0) { P.hp = 0; P.alive = false; G.onPlayerDeath(from); }
 };
@@ -2968,7 +2975,7 @@ G.buildScene = function () {
   R.setLights(pts, spots);
   R.flashGlow = P.flashlight && P.alive && G.state !== 'menu' ? 1 : 0;
   const viewmodel = (G.state === 'menu') ? [] : P.viewmodelDrawables();
-  return { opaque, viewmodel, decals: FX.decalDrawables(), particles: FX.systems(), rainCount: Math.floor(S.rain) };
+  return { opaque, viewmodel, decals: FX.decalDrawables().concat(W.transparent), particles: FX.systems(), rainCount: Math.floor(S.rain) };
 };
 G.render = function (dt) {
   const fov = G.state === 'menu' ? 78 : P.fov;
