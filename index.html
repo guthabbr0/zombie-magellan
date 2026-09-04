@@ -3002,7 +3002,8 @@ G.hud = function (dt) {
 };
 /* ---- input ---- */
 G.touchMove = [0, 0]; G.touchFire = false; G.touchAim = false; G.touchSprint = false; G.touchJump = false; G.touchCrouch = false; G.touchInteract = false; G.mouseFire = false; G.mouseAim = false;
-G.requestLock = function () { if (IS_TOUCH) return; try { canvas.requestPointerLock(); } catch (e) { } };
+G.requestLock = function () { if (IS_TOUCH || G.noLock) return; try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => G.lockFailed()); } catch (e) { G.lockFailed(); } clearTimeout(G.lockTimer); G.lockTimer = setTimeout(() => { if (document.pointerLockElement !== canvas) G.lockFailed(); }, 1500); };
+G.lockFailed = function () { if (G.noLock) return; G.noLock = true; canvas.style.cursor = 'none'; G.msg('MOUSE LOOK: MOVE THE MOUSE', 'pointer capture is unavailable here · keep the cursor over the game', 4); };
 G.unlock = function () { if (document.pointerLockElement) document.exitPointerLock(); };
 G.bindInput = function () {
   window.addEventListener('keydown', e => {
@@ -3014,12 +3015,13 @@ G.bindInput = function () {
   });
   window.addEventListener('keyup', e => { G.keys[e.code] = false; });
   window.addEventListener('blur', () => { G.keys = {}; G.mouseFire = false; G.mouseAim = false; });
-  canvas.addEventListener('mousedown', e => { if (IS_TOUCH && e.pointerType === 'touch') return; if (G.state === 'cutscene') { CS.skip(); return; } if (G.state === 'playing' && !document.pointerLockElement) { G.requestLock(); return; } if (e.button === 0) G.mouseFire = true; if (e.button === 2) G.mouseAim = true; });
+  canvas.addEventListener('mousedown', e => { if (IS_TOUCH && e.pointerType === 'touch') return; if (G.state === 'cutscene') { CS.skip(); return; } if (G.state === 'playing' && !document.pointerLockElement && !G.noLock) { G.requestLock(); return; } if (e.button === 0) G.mouseFire = true; if (e.button === 2) G.mouseAim = true; });
   window.addEventListener('mouseup', e => { if (e.button === 0) G.mouseFire = false; if (e.button === 2) G.mouseAim = false; });
   window.addEventListener('contextmenu', e => e.preventDefault());
-  window.addEventListener('mousemove', e => { if (document.pointerLockElement === canvas && (G.state === 'playing' || G.state === 'cutscene')) { const mx = clamp(e.movementX, -200, 200), my = clamp(e.movementY, -200, 200); G.input.lookX += mx; G.input.lookY += my; } });
+  window.addEventListener('mousemove', e => { if ((document.pointerLockElement === canvas || G.noLock) && (G.state === 'playing' || G.state === 'cutscene')) { const mx = clamp(e.movementX, -200, 200), my = clamp(e.movementY, -200, 200); G.input.lookX += mx; G.input.lookY += my; } });
+  document.addEventListener('pointerlockerror', () => G.lockFailed());
   window.addEventListener('wheel', e => { if (G.state === 'playing') G.input.cycle = e.deltaY > 0 ? 1 : -1; }, { passive: true });
-  document.addEventListener('pointerlockchange', () => { G.locked = document.pointerLockElement === canvas; if (!G.locked && G.state === 'playing' && !IS_TOUCH) G.pause(); });
+  document.addEventListener('pointerlockchange', () => { G.locked = document.pointerLockElement === canvas; if (G.locked) clearTimeout(G.lockTimer); if (!G.locked && G.state === 'playing' && !IS_TOUCH && !G.noLock) G.pause(); });
   // touch controls
   if (IS_TOUCH) {
     const touch = $('touch'); touch.style.pointerEvents = 'auto'; const stick = $('stick'), knob = stick.querySelector('i'); let stickId = null, stickBase = [0, 0], lookId = null, lookLast = [0, 0];
