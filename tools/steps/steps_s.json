@@ -1,0 +1,3 @@
+[{"wait":6000},{"eval":"MAGELLAN.G.startMission(); MAGELLAN.CS.skip(); 'started'"},{"wait":2000},
+ {"eval":"const M=MAGELLAN; M.G.lightningT=999; M.NPCs.list.forEach(n=>n.combat=false); M.Zombies.list.length=0; M.G.spawnT=999; M.G.obj.timer=9999; M.P.pos[0]=0; M.P.pos[2]=-60; M.P.yaw=0; M.P.pitch=0; M.P.cur='pistol'; M.P.next=null; M.P.switchT=0; const z=M.Zombies.spawn([0.5,0,-66],1); z.awareness=1; z.speed=0.06; z.cool=999; 'pistol'"},{"wait":3000},{"shot":"pistol3"},
+ {"eval":"const M=MAGELLAN; M.P.give('shotgun',24); M.P.cur='shotgun'; M.P.next=null; M.P.switchT=0; 'shotgun'"},{"wait":2500},{"shot":"shotgun5"}]

@@ -1,0 +1,3 @@
+[{"wait":9000},{"eval":"window.__frame"},{"wait":2000},{"eval":"window.__frame"},
+ {"eval":"MAGELLAN.A.init(); 'audio on'"},{"wait":2000},{"eval":"window.__frame"},{"wait":2000},{"eval":"window.__frame"},
+ {"eval":"MAGELLAN.A.ctx.suspend(); 'audio suspended'"},{"wait":2000},{"eval":"window.__frame"},{"wait":2000},{"eval":"window.__frame"}]

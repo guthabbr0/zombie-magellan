@@ -1,0 +1,2 @@
+[{"wait":6000},{"eval":"document.title + ' | ' + document.getElementById('status').textContent"},{"eval":"MAGELLAN.G.startMission(); 'started'"},{"wait":2500},{"eval":"MAGELLAN.CS.skip(); 'skip'"},{"wait":2500},
+ {"eval":"(()=>{const M=MAGELLAN;return {state:M.G.state,noLock:!!M.G.noLock,f:window.__frame,z:M.Zombies.list.length}})()"}]

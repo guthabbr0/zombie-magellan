@@ -55,9 +55,28 @@ No build step, no dependencies, no external assets: open the file in a modern br
 | Interact | hold `E` | hold USE |
 | Pause | `Esc` | II |
 
-Any key or tap skips a cutscene.
+Any key or tap skips a cutscene. If the browser refuses pointer capture (for example inside
+an embedded frame), looking falls back to plain mouse movement.
 
 ## Running
 
 Open `index.html` directly, or serve the folder with any static server. Requires WebGL2.
 Units in the code are metres, seconds and radians; dates on screen are ISO 8601.
+
+## Repository layout (branch `dev`)
+
+| Path | What it is |
+| --- | --- |
+| `index.html` | the complete game, generated from `src/` |
+| `src/` | ordered source parts (HTML head, math, GL helpers, shaders, assets, renderer, world, audio, player, characters, effects, cutscenes, game, main) |
+| `tools/build.sh` | concatenates `src/` into `index.html` and syntax-checks the JavaScript |
+| `tools/run2.js`, `run3.js`, `shot.js`, `steps/` | headless Playwright test runners (desktop and touch emulation) and the scripted test scenarios |
+| `tools/export_textures.js`, `export_sounds.js` | bake the procedural textures to PNG and the synthesised sounds to WAV |
+| `assets/textures/`, `assets/sounds/` | the baked assets, ready to reuse elsewhere (see `assets/README.md`) |
+| `assets/artifact/magellan.html` | the page without its document wrapper, for the claude.ai artifact host |
+| `docs/DESIGN.md` | architecture and reuse notes for every subsystem |
+| `docs/TRANSCRIPT.md` | curated transcript of the development session and lessons learned |
+| `docs/screenshots/` | development captures used to tune the look |
+
+To change the game: edit files under `src/`, run `tools/build.sh`, then test with
+`NODE_PATH=<global node_modules> node tools/run2.js tools/steps/steps_e.json 960 540`.

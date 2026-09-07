@@ -1,0 +1,9 @@
+<canvas id=c width=320 height=200></canvas>
+<script>
+const gl=document.getElementById('c').getContext('webgl2');
+window.result = gl ? {
+  ok:true, ver:gl.getParameter(gl.VERSION), renderer:gl.getParameter(gl.RENDERER),
+  ext:{cbf:!!gl.getExtension('EXT_color_buffer_float'), cbhf:!!gl.getExtension('EXT_color_buffer_half_float'), aniso:!!gl.getExtension('EXT_texture_filter_anisotropic'), fl:!!gl.getExtension('OES_texture_float_linear')},
+  maxTex:gl.getParameter(gl.MAX_TEXTURE_SIZE), maxVU:gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS), maxFU:gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS), maxDB:gl.getParameter(gl.MAX_DRAW_BUFFERS), maxTIU:gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)
+} : {ok:false};
+</script>

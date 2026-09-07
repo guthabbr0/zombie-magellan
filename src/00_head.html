@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>MAGELLAN</title>
+<style>
+:root{
+  --mono:"JetBrains Mono","Cascadia Mono","SF Mono","Consolas","Roboto Mono","DejaVu Sans Mono",monospace;
+  --sans:"Inter","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --hud:rgba(235,240,245,.92);
+  --accent:#ff3b30;
+  --accent2:#7fd4ff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden;color:var(--hud);font-family:var(--sans);
+  -webkit-user-select:none;user-select:none;touch-action:none;overscroll-behavior:none;}
+canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;background:#000;outline:none;}
+#ui{position:fixed;inset:0;pointer-events:none;overflow:hidden;}
+#ui>*{pointer-events:none;}
+.panel{pointer-events:auto;}
+.hidden{display:none !important;}
+
+/* ---------- generic ---------- */
+button,select,input{font-family:var(--mono);}
+.btn{pointer-events:auto;display:block;width:100%;text-align:left;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.18);
+  color:#eef2f6;font:600 14px/1 var(--mono);letter-spacing:.14em;padding:13px 16px;margin:6px 0;cursor:pointer;
+  transition:background .15s,border-color .15s,transform .1s;text-transform:uppercase;}
+.btn:hover,.btn:focus-visible{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.5);outline:none;}
+.btn:active{transform:translateX(2px);}
+.btn.primary{border-color:var(--accent);background:rgba(255,59,48,.14);}
+.btn.primary:hover{background:rgba(255,59,48,.28);}
+.btn[disabled]{opacity:.35;cursor:default;}
+.small{font-size:11px;letter-spacing:.12em;opacity:.7;}
+.kbd{display:inline-block;border:1px solid rgba(255,255,255,.35);border-radius:3px;padding:1px 6px;margin:0 2px;font:12px var(--mono);background:rgba(0,0,0,.3);}
+
+/* ---------- orientation overlay ---------- */
+#orient{position:absolute;inset:0;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:100;text-align:center;font:600 16px/1.6 var(--mono);letter-spacing:.1em;}
+#orient .phone{width:34px;height:60px;border:3px solid #fff;border-radius:6px;margin-bottom:24px;animation:rot 1.6s ease-in-out infinite;}
+@keyframes rot{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+body:not(.touch) #orient{display:none;}
+@media (orientation:landscape){#orient{display:none;}}
+
+/* ---------- menu ---------- */
+#menu{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 0 0 min(9vw,110px);
+  background:linear-gradient(90deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.55) 45%,rgba(0,0,0,0) 80%);}
+#menu .title{font:900 clamp(44px,9vmin,96px)/0.95 var(--sans);letter-spacing:.06em;color:#fff;text-shadow:0 0 30px rgba(255,255,255,.25);margin:0;}
+#menu .title span{color:var(--accent);}
+#menu .sub{font:500 clamp(10px,1.6vmin,13px)/1.5 var(--mono);letter-spacing:.32em;opacity:.8;margin:8px 0 26px 4px;text-transform:uppercase;}
+#menu .buttons{width:min(320px,60vw);}
+#menu .foot{position:absolute;left:min(9vw,110px);bottom:18px;font:11px/1.7 var(--mono);letter-spacing:.08em;opacity:.55;}
+#menu .status{font:12px/1.4 var(--mono);letter-spacing:.15em;color:var(--accent2);margin:12px 0 0 2px;min-height:18px;text-transform:uppercase;}
+#menu .bar{width:min(320px,60vw);height:2px;background:rgba(255,255,255,.12);margin-top:6px;}
+#menu .bar i{display:block;height:100%;width:0;background:var(--accent2);transition:width .15s;}
+#menu .rec{position:absolute;right:28px;top:22px;font:600 13px var(--mono);letter-spacing:.2em;display:flex;align-items:center;gap:10px;opacity:.75}
+#menu .rec b{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:blink 1.2s steps(1) infinite;}
+@keyframes blink{50%{opacity:.15}}
+#menu .warn{font:11px/1.5 var(--mono);color:#ffb347;margin-top:12px;max-width:min(360px,70vw);letter-spacing:.05em;}
+
+/* ---------- settings / help ---------- */
+.sheet{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
+.sheet .box{width:min(760px,94vw);max-height:92vh;overflow:auto;background:rgba(8,10,12,.92);border:1px solid rgba(255,255,255,.14);padding:18px 22px 16px;
+  font-family:var(--mono);scrollbar-width:thin;}
+.sheet h2{margin:0 0 12px;font:700 14px/1 var(--mono);letter-spacing:.3em;text-transform:uppercase;color:#fff;}
+.tabs{display:flex;gap:4px;margin-bottom:12px;}
+.tabs button{flex:1;background:transparent;border:1px solid rgba(255,255,255,.15);color:#ccd;padding:9px 6px;font:600 11px var(--mono);letter-spacing:.2em;cursor:pointer;pointer-events:auto;text-transform:uppercase;}
+.tabs button.on{background:rgba(127,212,255,.12);border-color:var(--accent2);color:#fff;}
+.tab{display:none;}
+.tab.on{display:block;}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;letter-spacing:.05em;}
+.row label{flex:1;opacity:.9;}
+.row .hint{display:block;font-size:10px;opacity:.5;letter-spacing:.03em;margin-top:2px;}
+.row select,.row input[type=range]{pointer-events:auto;}
+.row select{background:#111;color:#fff;border:1px solid rgba(255,255,255,.25);padding:6px 8px;font-size:12px;min-width:130px;}
+.row input[type=range]{width:150px;accent-color:var(--accent2);}
+.row .val{width:56px;text-align:right;font-size:11px;opacity:.8;}
+.row .toggle{pointer-events:auto;min-width:80px;background:#111;border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 8px;font:12px var(--mono);cursor:pointer;letter-spacing:.1em;}
+.row .toggle.on{background:rgba(127,212,255,.18);border-color:var(--accent2);}
+.sheet .actions{display:flex;gap:8px;margin-top:14px;}
+.sheet .actions .btn{margin:0;text-align:center;}
+.help p{font:12px/1.7 var(--mono);opacity:.85;margin:6px 0;}
+.help h3{font:700 11px var(--mono);letter-spacing:.25em;margin:14px 0 4px;color:var(--accent2);text-transform:uppercase;}
+
+/* ---------- HUD ---------- */
+#hud{position:absolute;inset:0;font-family:var(--mono);color:var(--hud);text-shadow:0 0 4px rgba(0,0,0,.9),0 1px 2px rgba(0,0,0,.9);}
+#hud .tl{position:absolute;left:2.6vmin;top:2.4vmin;font-size:clamp(11px,1.9vmin,15px);letter-spacing:.14em;line-height:1.5;}
+#hud .tl .rec{display:flex;align-items:center;gap:8px;font-weight:700;}
+#hud .tl .rec b{width:.9em;height:.9em;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:blink 1.1s steps(1) infinite;}
+#hud .tr{position:absolute;right:2.6vmin;top:2.4vmin;text-align:right;font-size:clamp(11px,1.9vmin,15px);letter-spacing:.12em;line-height:1.5;}
+#hud .batt{display:inline-flex;align-items:center;gap:6px;}
+#hud .batt i{display:inline-block;width:2.2em;height:1em;border:1px solid var(--hud);border-radius:2px;position:relative;}
+#hud .batt i:after{content:"";position:absolute;right:-4px;top:30%;width:3px;height:40%;background:var(--hud);}
+#hud .batt i b{display:block;height:100%;background:var(--hud);width:70%;}
+#hud .bl{position:absolute;left:2.6vmin;bottom:2.4vmin;font-size:clamp(11px,1.9vmin,15px);letter-spacing:.1em;line-height:1.5;max-width:46vw;}
+#hud .br{position:absolute;right:2.6vmin;bottom:2.4vmin;text-align:right;font-size:clamp(11px,1.9vmin,15px);letter-spacing:.1em;line-height:1.3;}
+#hud .br .ammo{font-size:clamp(20px,4.2vmin,34px);font-weight:700;letter-spacing:.05em;}
+#hud .br .ammo small{font-size:.5em;opacity:.7;font-weight:500;}
+#hud .br .ammo.low{color:#ff6b5e;}
+#hud .hp{width:clamp(120px,22vmin,220px);height:4px;background:rgba(255,255,255,.18);margin-top:6px;}
+#hud .hp i{display:block;height:100%;background:var(--hud);width:100%;transition:width .2s;}
+#hud .hp.low i{background:#ff4b3e;}
+#hud .obj{opacity:.9;}
+#hud .obj .t{font-weight:700;letter-spacing:.2em;font-size:.8em;opacity:.7;}
+#hud .obj .timer{font-weight:700;}
+#dot{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:rgba(255,255,255,.75);box-shadow:0 0 3px #000;}
+#hit{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;opacity:0;transition:opacity .08s;}
+#hit:before,#hit:after{content:"";position:absolute;left:50%;top:50%;width:26px;height:2px;background:#fff;box-shadow:0 0 3px #000;margin:-1px 0 0 -13px;}
+#hit:before{transform:rotate(45deg) scaleX(.55);}#hit:after{transform:rotate(-45deg) scaleX(.55);}
+#hit.head:before,#hit.head:after{background:#ff4b3e;}
+#marker{position:absolute;left:0;top:0;transform:translate(-50%,-50%);text-align:center;font-size:clamp(10px,1.7vmin,13px);letter-spacing:.12em;white-space:nowrap;}
+#marker .dia{width:12px;height:12px;border:2px solid var(--accent2);transform:rotate(45deg);margin:0 auto 6px;box-shadow:0 0 8px rgba(127,212,255,.6);}
+#prompt{position:absolute;left:50%;top:58%;transform:translateX(-50%);font-size:clamp(12px,2.2vmin,16px);letter-spacing:.15em;text-align:center;}
+#prompt .kbd{margin-right:6px;}
+#prompt .hold{width:120px;height:3px;background:rgba(255,255,255,.2);margin:8px auto 0;}
+#prompt .hold i{display:block;height:100%;width:0;background:var(--accent2);}
+#msg{position:absolute;left:50%;top:14%;transform:translateX(-50%);font-size:clamp(13px,2.6vmin,20px);letter-spacing:.3em;font-weight:700;text-align:center;opacity:0;transition:opacity .4s;text-transform:uppercase;white-space:nowrap;}
+#msg .s{display:block;font-size:.6em;font-weight:500;letter-spacing:.2em;opacity:.8;margin-top:6px;}
+#wave{position:absolute;left:50%;top:2.4vmin;transform:translateX(-50%);font-size:clamp(10px,1.7vmin,13px);letter-spacing:.25em;opacity:.7;}
+#fps{position:absolute;left:50%;bottom:2.4vmin;transform:translateX(-50%);font:11px var(--mono);letter-spacing:.1em;opacity:.55;}
+#hud.cine .bl,#hud.cine .br,#hud.cine #wave,#hud.cine #dot,#hud.cine #marker,#hud.cine #prompt{display:none;}
+#lowhp{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(120,0,0,.55) 100%);opacity:0;}
+
+/* ---------- touch controls ---------- */
+#touch{position:absolute;inset:0;}
+#stick{position:absolute;left:6vmin;bottom:9vmin;width:26vmin;height:26vmin;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.04);pointer-events:none;}
+#stick i{position:absolute;left:50%;top:50%;width:11vmin;height:11vmin;margin:-5.5vmin 0 0 -5.5vmin;border-radius:50%;background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.5);}
+.tb{position:absolute;pointer-events:auto;width:12vmin;height:12vmin;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);
+  color:#fff;font:700 clamp(9px,1.9vmin,13px) var(--mono);letter-spacing:.08em;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;}
+.tb.on{background:rgba(255,255,255,.35);}
+#bFire{right:5vmin;bottom:9vmin;width:19vmin;height:19vmin;border-color:rgba(255,80,60,.7);background:rgba(255,60,40,.18);}
+#bAim{right:26vmin;bottom:7vmin;}
+#bReload{right:24vmin;bottom:22vmin;}
+#bSwap{right:10vmin;bottom:31vmin;}
+#bJump{right:38vmin;bottom:9vmin;}
+#bSprint{left:34vmin;bottom:10vmin;}
+#bLight{left:6vmin;top:14vmin;}
+#bInteract{left:50%;top:60%;transform:translateX(-50%);width:16vmin;height:10vmin;border-radius:8px;display:none;}
+#bPause{right:2.4vmin;top:9vmin;width:9vmin;height:9vmin;}
+body:not(.touch) #touch{display:none;}
+body.touch #dot{width:6px;height:6px;margin:-3px 0 0 -3px;}
+body.touch #hud .br{right:auto;left:50%;transform:translateX(-50%);bottom:2vmin;text-align:center;}
+body.touch #hud .bl{max-width:34vw;bottom:auto;top:30vmin;}
+
+/* ---------- cutscene ---------- */
+#cine{position:absolute;inset:0;}
+#cine .bar{position:absolute;left:0;right:0;height:0;background:#000;transition:height .6s ease;}
+#cine .bar.top{top:0;}#cine .bar.bottom{bottom:0;}
+#cine.on .bar{height:9vh;}
+#subs{position:absolute;left:10%;right:10%;bottom:12vh;text-align:center;font:500 clamp(13px,2.5vmin,21px)/1.45 var(--mono);color:#fff;text-shadow:0 0 6px #000,0 2px 3px #000;letter-spacing:.03em;}
+#subs .who{display:block;font-size:.7em;letter-spacing:.3em;color:var(--accent2);margin-bottom:4px;font-weight:700;}
+#subs .radio{color:#ffd28a;}
+#skip{position:absolute;right:3vmin;bottom:11vh;font:11px var(--mono);letter-spacing:.2em;opacity:.55;pointer-events:auto;cursor:pointer;}
+#card{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#000;text-align:center;font-family:var(--mono);opacity:0;transition:opacity .8s;}
+#card .a{font:700 clamp(14px,3vmin,24px) var(--mono);letter-spacing:.4em;color:#fff;}
+#card .b{font:400 clamp(11px,2vmin,15px)/1.8 var(--mono);letter-spacing:.2em;opacity:.7;margin-top:14px;white-space:pre-line;}
+#card.on{opacity:1;}
+
+/* ---------- pause / game over ---------- */
+#pause .box,#over .box{width:min(520px,90vw);text-align:left;}
+#over .big{font:900 clamp(30px,7vmin,64px)/1 var(--sans);letter-spacing:.08em;color:#fff;margin:0 0 6px;}
+#over .big.dead{color:var(--accent);}
+#over .stats{font:12px/1.9 var(--mono);letter-spacing:.1em;margin:10px 0 16px;opacity:.9;}
+#over .stats span{display:inline-block;min-width:200px;opacity:.65;}
+
+#ctxlost{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#000;font:600 14px/1.8 var(--mono);text-align:center;letter-spacing:.1em;}
+#vig{position:absolute;inset:0;box-shadow:inset 0 0 12vmin rgba(0,0,0,.55);}
+@media (max-height:420px){#menu .title{font-size:40px;}#menu .buttons .btn{padding:9px 12px;margin:4px 0;font-size:12px;}}
+</style>
+</head>
+<body>
+<canvas id="gl" tabindex="0"></canvas>
+<div id="ui">
+  <div id="vig"></div>
+  <div id="hud" class="hidden">
+    <div class="tl"><div class="rec"><b></b>REC</div><div id="camid">CAM 07 · SGT. R. MAGELLAN · UNIT TR-4</div><div id="camres">1080p · 30 FPS · AGC ON</div></div>
+    <div class="tr"><div id="tstamp">2026-09-04 02:13:45</div><div><span class="batt"><i><b id="battb"></b></i><span id="battp">74%</span></span> &nbsp; <span id="storage">STORAGE 61%</span></div></div>
+    <div id="wave"></div>
+    <div id="msg"></div>
+    <div id="marker" class="hidden"><div class="dia"></div><div id="markert"></div></div>
+    <div id="dot"></div>
+    <div id="hit"></div>
+    <div id="prompt" class="hidden"></div>
+    <div class="bl">
+      <div class="obj"><div class="t">OBJECTIVE</div><div id="objt">—</div></div>
+      <div class="hp" id="hpbar"><i id="hpfill"></i></div>
+    </div>
+    <div class="br"><div id="wname">P9 SIDEARM</div><div class="ammo" id="ammo">15 <small>/ 60</small></div></div>
+    <div id="lowhp"></div>
+    <div id="fps" class="hidden"></div>
+  </div>
+  <div id="touch" class="hidden">
+    <div id="stick"><i></i></div>
+    <div class="tb" id="bFire">FIRE</div>
+    <div class="tb" id="bAim">AIM</div>
+    <div class="tb" id="bReload">RELOAD</div>
+    <div class="tb" id="bSwap">SWAP</div>
+    <div class="tb" id="bJump">JUMP</div>
+    <div class="tb" id="bSprint">RUN</div>
+    <div class="tb" id="bLight">LIGHT</div>
+    <div class="tb" id="bInteract">USE</div>
+    <div class="tb" id="bPause">II</div>
+  </div>
+  <div id="cine" class="hidden">
+    <div class="bar top"></div><div class="bar bottom"></div>
+    <div id="subs"></div>
+    <div id="skip">TAP / PRESS ANY KEY TO SKIP ▸</div>
+    <div id="card"><div class="a" id="carda"></div><div class="b" id="cardb"></div></div>
+  </div>
+  <div id="menu" class="panel">
+    <div class="rec"><b></b>STANDBY</div>
+    <h1 class="title">MAGEL<span>L</span>AN</h1>
+    <div class="sub">Bodycam evidence · Case 26-0904-TR4 · District 7</div>
+    <div class="buttons">
+      <button class="btn primary" id="btnStart" disabled>Start mission</button>
+      <button class="btn" id="btnResume" style="display:none">Resume</button>
+      <button class="btn" id="btnSettings">Settings</button>
+      <button class="btn" id="btnHelp">Briefing &amp; controls</button>
+    </div>
+    <div class="status" id="status">Initializing camera…</div>
+    <div class="bar"><i id="pbar"></i></div>
+    <div class="warn" id="warn"></div>
+    <div class="foot" id="foot">WASD move · Mouse look · LMB fire · RMB aim · R reload · F light · Shift sprint · E use · 1-3 weapons · Esc pause<br>Best played with headphones · Landscape on mobile</div>
+  </div>
+  <div id="settings" class="sheet panel hidden"><div class="box">
+    <h2>Settings</h2>
+    <div class="tabs"><button class="on" data-tab="gfx">Graphics</button><button data-tab="ctl">Controls</button><button data-tab="aud">Audio</button></div>
+    <div class="tab on" id="tab-gfx"></div>
+    <div class="tab" id="tab-ctl"></div>
+    <div class="tab" id="tab-aud"></div>
+    <div class="actions"><button class="btn" id="btnDefaults">Reset defaults</button><button class="btn primary" id="btnCloseSettings">Done</button></div>
+  </div></div>
+  <div id="help" class="sheet panel hidden"><div class="box help">
+    <h2>Mission briefing</h2>
+    <p>02:13 · District 7 quarantine line. Tactical Response Unit TR-4 holds the Harbor Street checkpoint. The pharmacy team went dark forty minutes ago. You are Sgt. R. Magellan. Everything you see is being recorded.</p>
+    <h3>Controls · keyboard &amp; mouse</h3>
+    <p><span class="kbd">W A S D</span> move · <span class="kbd">Mouse</span> look · <span class="kbd">LMB</span> fire · <span class="kbd">RMB</span> aim down sights · <span class="kbd">R</span> reload · <span class="kbd">F</span> flashlight · <span class="kbd">Shift</span> sprint · <span class="kbd">Space</span> jump · <span class="kbd">C</span> crouch · <span class="kbd">E</span> interact · <span class="kbd">1 2 3</span> / <span class="kbd">Q</span> / <span class="kbd">Wheel</span> weapons · <span class="kbd">Esc</span> pause</p>
+    <h3>Controls · touch</h3>
+    <p>Left thumb: virtual stick to move. Right half of the screen: drag to look. Buttons: FIRE (hold), AIM, RELOAD, SWAP, JUMP, RUN, LIGHT. Play in landscape.</p>
+    <h3>Tips</h3>
+    <p>Headshots drop them instantly. Runners appear from the third wave on: keep the shotgun close. Zombies track your light and your gunfire. Health recovers when you are not being hit. Ammo and medkits are scattered along the street.</p>
+    <div class="actions"><button class="btn primary" id="btnCloseHelp">Back</button></div>
+  </div></div>
+  <div id="pause" class="sheet panel hidden"><div class="box">
+    <h2>Paused · recording continues</h2>
+    <button class="btn primary" id="btnUnpause">Resume</button>
+    <button class="btn" id="btnPauseSettings">Settings</button>
+    <button class="btn" id="btnRestart">Restart from checkpoint</button>
+    <button class="btn" id="btnQuit">Abort mission</button>
+  </div></div>
+  <div id="over" class="sheet panel hidden"><div class="box">
+    <div class="big" id="overTitle">SIGNAL LOST</div>
+    <div class="small" id="overSub">Body camera stopped recording.</div>
+    <div class="stats" id="overStats"></div>
+    <button class="btn primary" id="btnRetry">Retry from checkpoint</button>
+    <button class="btn" id="btnToMenu">Return to menu</button>
+  </div></div>
+  <div id="orient"><div class="phone"></div>ROTATE YOUR DEVICE<br><span class="small">landscape required</span></div>
+  <div id="ctxlost" class="hidden">GRAPHICS CONTEXT LOST<br><span class="small">reload the page to restart the camera</span></div>
+</div>
+<script>
+"use strict";
